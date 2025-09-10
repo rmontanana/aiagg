@@ -1,6 +1,16 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Float
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from .base import Base
 
 
@@ -51,10 +61,10 @@ class Article(Base):
     scraped_at = Column(DateTime(timezone=True), server_default=func.now())
     is_processed = Column(Boolean, default=False)
     sentiment_score = Column(Float)
-    
+
     # Foreign keys
     source_id = Column(Integer, ForeignKey("news_sources.id"), nullable=False)
-    
+
     # Relationships
     source = relationship("NewsSource", back_populates="articles")
     tags = relationship("ArticleTag", back_populates="article")

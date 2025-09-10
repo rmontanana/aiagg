@@ -1,13 +1,13 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
-from pydantic import BaseModel
-from datetime import datetime
+
 from ...db.base import get_db
-from ...db.models import Article, NewsSource, Tag, ArticleTag
-from ..dependencies import get_current_active_user
+from ...db.models import Article, ArticleTag, NewsSource, Tag
 
 router = APIRouter()
 
@@ -17,19 +17,18 @@ class ArticleResponse(BaseModel):
     id: int
     title: str
     url: str
-    summary: Optional[str] = None
-    author: Optional[str] = None
-    published_at: Optional[datetime] = None
-    sentiment_score: Optional[float] = None
+    summary: str | None = None
+    author: str | None = None
+    published_at: datetime | None = None
+    sentiment_score: float | None = None
     source_name: str
-    tags: List[str] = []
+    tags: list[str] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ArticleListResponse(BaseModel):
-    articles: List[ArticleResponse]
+    articles: list[ArticleResponse]
     total: int
     page: int
     per_page: int
@@ -40,43 +39,43 @@ class ArticleListResponse(BaseModel):
 async def get_articles(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    category: Optional[str] = None,
-    search: Optional[str] = None,
+    category: str | None = None,
+    search: str | None = None,
     db: AsyncSession = Depends(get_db)
 ):
     """Get paginated list of articles."""
-    
+
     # Build query
     query = select(Article).join(NewsSource)
-    
+
     # Add filters
     if category:
         query = query.where(NewsSource.category == category)
-    
+
     if search:
         query = query.where(Article.title.contains(search))
-    
+
     # Add ordering
     query = query.order_by(Article.published_at.desc())
-    
+
     # Get total count
     count_query = select(func.count(Article.id))
     if category:
         count_query = count_query.select_from(Article.join(NewsSource)).where(NewsSource.category == category)
     if search:
         count_query = count_query.where(Article.title.contains(search))
-    
+
     total_result = await db.execute(count_query)
     total = total_result.scalar()
-    
+
     # Apply pagination
     offset = (page - 1) * per_page
     query = query.offset(offset).limit(per_page)
-    
+
     # Execute query
     result = await db.execute(query)
     articles = result.scalars().all()
-    
+
     # Transform to response model
     article_responses = []
     for article in articles:
@@ -86,8 +85,8 @@ async def get_articles(
             .select_from(Tag.join(ArticleTag))
             .where(ArticleTag.article_id == article.id)
         )
-        tags = [tag for tag in tags_result.scalars().all()]
-        
+        tags = list(tags_result.scalars().all())
+
         article_responses.append(ArticleResponse(
             id=article.id,
             title=article.title,
@@ -99,9 +98,9 @@ async def get_articles(
             source_name=article.source.name,
             tags=tags
         ))
-    
+
     total_pages = (total + per_page - 1) // per_page
-    
+
     return ArticleListResponse(
         articles=article_responses,
         total=total,
@@ -117,23 +116,23 @@ async def get_article(
     db: AsyncSession = Depends(get_db)
 ):
     """Get a specific article by ID."""
-    
+
     result = await db.execute(
         select(Article).join(NewsSource).where(Article.id == article_id)
     )
     article = result.scalar_one_or_none()
-    
+
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
-    
+
     # Get tags
     tags_result = await db.execute(
         select(Tag.name)
         .select_from(Tag.join(ArticleTag))
         .where(ArticleTag.article_id == article.id)
     )
-    tags = [tag for tag in tags_result.scalars().all()]
-    
+    tags = list(tags_result.scalars().all())
+
     return ArticleResponse(
         id=article.id,
         title=article.title,

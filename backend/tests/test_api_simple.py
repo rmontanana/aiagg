@@ -1,7 +1,7 @@
 """Simple API tests without complex database fixtures."""
 
-import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 # Use TestClient instead of AsyncClient for simplicity
@@ -64,8 +64,8 @@ def test_articles_endpoint_structure():
     # Instead, let's test that our app structure is correct
     from app.api.routes import articles
     assert hasattr(articles, 'router')
-    
-    
+
+
 def test_app_includes_articles_router():
     """Test that the main app includes the articles router."""
     from app.main import app

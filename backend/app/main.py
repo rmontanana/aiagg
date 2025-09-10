@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+from .api.routes import articles, auth, health
 from .core.config import settings
-from .api.routes import auth, articles, health
 
 # Create FastAPI app
 app = FastAPI(
@@ -25,7 +26,7 @@ if settings.BACKEND_CORS_ORIGINS:
 
 # Security middleware
 app.add_middleware(
-    TrustedHostMiddleware, 
+    TrustedHostMiddleware,
     allowed_hosts=["localhost", "127.0.0.1", "*"]
 )
 

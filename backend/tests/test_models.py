@@ -1,8 +1,8 @@
 """Test database models without database connection."""
 
-import pytest
-from app.db.models import User, Article, NewsSource, Tag, ArticleTag, UserPreference
 from datetime import datetime
+
+from app.db.models import Article, ArticleTag, NewsSource, Tag, User, UserPreference
 
 
 def test_user_model_creation():
@@ -14,7 +14,7 @@ def test_user_model_creation():
         is_active=True,
         is_superuser=False
     )
-    
+
     assert user.email == "test@example.com"
     assert user.username == "testuser"
     assert user.is_active is True
@@ -30,7 +30,7 @@ def test_news_source_model():
         is_active=True,
         category="technology"
     )
-    
+
     assert source.name == "Test News"
     assert source.url == "https://testnews.com"
     assert source.category == "technology"
@@ -50,7 +50,7 @@ def test_article_model():
         sentiment_score=0.5,
         source_id=1
     )
-    
+
     assert article.title == "Test Article"
     assert article.author == "Test Author"
     assert article.is_processed is False
@@ -60,7 +60,7 @@ def test_article_model():
 def test_tag_model():
     """Test Tag model can be created."""
     tag = Tag(name="python")
-    
+
     assert tag.name == "python"
 
 
@@ -71,7 +71,7 @@ def test_article_tag_model():
         tag_id=1,
         confidence=0.95
     )
-    
+
     assert article_tag.article_id == 1
     assert article_tag.tag_id == 1
     assert article_tag.confidence == 0.95
@@ -85,8 +85,8 @@ def test_user_preference_model():
         preference_value="technology",
         weight=1.0
     )
-    
+
     assert preference.user_id == 1
-    assert preference.preference_type == "category" 
+    assert preference.preference_type == "category"
     assert preference.preference_value == "technology"
     assert preference.weight == 1.0

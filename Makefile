@@ -1,7 +1,7 @@
 # AI News Aggregator - Development Makefile
 # ==========================================
 
-.PHONY: help install install-dev clean test test-unit test-models test-api test-all
+.PHONY: help install install-dev clean test test-unit test-models test-api test-all test-by-category test-coverage
 .PHONY: lint format typecheck pre-commit run run-dev run-prod
 .PHONY: docker-up docker-down docker-build docker-logs docker-clean
 .PHONY: db-create db-migrate db-upgrade db-downgrade db-reset
@@ -75,28 +75,37 @@ clean: ## Clean build artifacts and cache
 
 test-unit: ## Run unit tests (core functionality)
 	@echo "$(GREEN)🧪 Running unit tests...$(NC)"
-	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_unit.py -v
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_unit.py -v --cov-fail-under=0
 
 test-models: ## Run model tests (database models)
 	@echo "$(GREEN)🧪 Running model tests...$(NC)"
-	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_models.py -v
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_models.py -v --cov-fail-under=0
 
 test-api: ## Run API tests (FastAPI endpoints)
 	@echo "$(GREEN)🧪 Running API tests...$(NC)"
-	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_api_simple.py -v
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_api_simple.py -v --cov-fail-under=0
 
-test-all: test-unit test-models test-api ## Run all working tests
+test-coverage: ## Run comprehensive coverage tests
+	@echo "$(GREEN)🧪 Running comprehensive coverage tests...$(NC)"
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_security_extended.py tests/test_dependencies.py tests/test_database.py tests/test_health_extended.py -v --cov-fail-under=0
+
+test-all: ## Run all tests in one command
+	@echo "$(GREEN)🧪 Running all tests...$(NC)"
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests -v
 	@echo "$(GREEN)✅ All tests completed!$(NC)"
 
 test: test-all ## Alias for test-all
 
+test-by-category: test-unit test-models test-api test-coverage ## Run tests by category (legacy)
+	@echo "$(GREEN)✅ All categorized tests completed!$(NC)"
+
 coverage: ## Run tests with coverage report
 	@echo "$(GREEN)📊 Running tests with coverage...$(NC)"
-	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_unit.py tests/test_models.py tests/test_api_simple.py --cov=app --cov-report=term-missing
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests --cov=app --cov-report=term-missing
 
 coverage-html: ## Generate HTML coverage report
 	@echo "$(GREEN)📊 Generating HTML coverage report...$(NC)"
-	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_unit.py tests/test_models.py tests/test_api_simple.py --cov=app --cov-report=html
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests --cov=app --cov-report=html
 	@echo "$(GREEN)📋 Coverage report: $(BACKEND_DIR)/htmlcov/index.html$(NC)"
 
 coverage-report: coverage-html ## Alias for coverage-html
