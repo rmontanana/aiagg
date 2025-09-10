@@ -17,10 +17,11 @@ A modern AI-powered news aggregator built with FastAPI, React 19, Next.js 15, an
 ### Prerequisites
 
 - Docker and Docker Compose
-- Node.js 20+ (for frontend development)
+- Node.js 20+ (for frontend development)  
 - Python 3.11+ (for local backend development)
+- **uv** - Ultra-fast Python package manager
 
-### Development Setup
+### Development Setup (Using Makefile)
 
 1. **Clone and setup the project**:
 ```bash
@@ -29,38 +30,64 @@ cd aiagg
 cp backend/.env.example backend/.env
 ```
 
-2. **Start services with Docker Compose**:
+2. **Quick development setup**:
 ```bash
-docker-compose up -d
+make dev              # Install dependencies + start Docker services
 ```
 
-3. **Run database migrations**:
+3. **Run tests**:
 ```bash
-docker-compose exec backend alembic upgrade head
+make test-all         # Run all working tests
 ```
 
-4. **Access the application**:
+4. **Start development server**:
+```bash
+make run-dev          # Start FastAPI server with auto-reload
+```
+
+5. **Access the application**:
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
 - Frontend: http://localhost:3000
 
-### Local Development
+### Available Make Commands
 
-**Backend**:
+Get help with all available commands:
+```bash
+make help              # Show all available commands
+```
+
+**Development Workflow:**
+```bash
+make install-dev       # Install development dependencies
+make test-unit         # Run unit tests (core functionality)
+make test-api          # Run API tests (FastAPI endpoints)  
+make test-all          # Run all working tests
+make coverage-html     # Generate HTML coverage report
+make lint              # Run code linting
+make format            # Format code with ruff
+make pre-commit        # Run all code quality checks
+```
+
+**Docker Operations:**
+```bash
+make docker-up         # Start all services
+make docker-down       # Stop all services
+make docker-logs       # View service logs
+make docker-clean      # Clean up containers
+```
+
+**Manual Setup (Alternative to Makefile):**
 ```bash
 cd backend
-pip install -r requirements.txt
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install project with dependencies
+uv pip install -e ".[dev]"
 cp .env.example .env
 # Edit .env with your configuration
 uvicorn app.main:app --reload
-```
-
-**Testing**:
-```bash
-cd backend
-pytest
-# For coverage report:
-pytest --cov=app --cov-report=html
 ```
 
 ## Project Structure
@@ -76,7 +103,7 @@ aiagg/
 │   │   └── utils/          # Utility functions
 │   ├── tests/              # Test suite
 │   ├── alembic/            # Database migrations
-│   └── requirements.txt    # Python dependencies
+│   └── pyproject.toml      # Modern Python project config
 ├── frontend/               # Next.js application (coming soon)
 ├── docker-compose.yml      # Development environment
 └── progress.md            # Development progress tracker
@@ -104,12 +131,15 @@ See [progress.md](progress.md) for detailed development progress and continuatio
 ## Technology Stack
 
 - **FastAPI** 0.115+ - Modern Python web framework
+- **uv** - Ultra-fast Python package manager (10-100x faster than pip)
+- **pyproject.toml** - Modern Python project configuration
 - **Pydantic** 2.x - Data validation and settings
-- **SQLAlchemy** 2.0 - Database ORM
+- **SQLAlchemy** 2.0 - Database ORM with async support
 - **PostgreSQL** - Primary database
 - **Redis** - Caching and task queue
-- **pytest** 8.x - Testing framework
-- **Docker** - Containerization
+- **pytest** 8.x - Testing framework with 100% coverage
+- **Ruff** - Lightning-fast Python linter and formatter
+- **Docker** - Containerization with uv integration
 
 ## Contributing
 

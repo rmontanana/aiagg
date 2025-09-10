@@ -1,8 +1,11 @@
+"""Integration tests that require database connection."""
+
 import pytest
 from httpx import AsyncClient
-from app.core.security import get_password_hash, verify_password
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_user_registration(client: AsyncClient):
     """Test user registration."""
@@ -22,6 +25,7 @@ async def test_user_registration(client: AsyncClient):
     assert "password" not in data
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_user_login(client: AsyncClient):
     """Test user login."""
@@ -47,6 +51,7 @@ async def test_user_login(client: AsyncClient):
     assert data["token_type"] == "bearer"
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_duplicate_user_registration(client: AsyncClient):
     """Test duplicate user registration fails."""
@@ -66,11 +71,35 @@ async def test_duplicate_user_registration(client: AsyncClient):
     assert "already registered" in response2.json()["detail"]
 
 
-def test_password_hashing():
-    """Test password hashing functionality."""
-    password = "testpassword123"
-    hashed = get_password_hash(password)
-    
-    assert hashed != password
-    assert verify_password(password, hashed) is True
-    assert verify_password("wrongpassword", hashed) is False
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_root_endpoint(client: AsyncClient):
+    """Test the root endpoint."""
+    response = await client.get("/")
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data
+    assert "version" in data
+    assert "environment" in data
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_health_check(client: AsyncClient):
+    """Test the health check endpoint."""
+    response = await client.get("/health/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert "service" in data
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_database_health(client: AsyncClient):
+    """Test the database health check endpoint."""
+    response = await client.get("/health/db")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["database"] == "connected"
