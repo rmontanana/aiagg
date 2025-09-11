@@ -89,10 +89,17 @@ test-coverage: ## Run comprehensive coverage tests
 	@echo "$(GREEN)🧪 Running comprehensive coverage tests...$(NC)"
 	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_security_extended.py tests/test_dependencies.py tests/test_database.py tests/test_health_extended.py -v --cov-fail-under=0
 
+test-auth: ## Run authentication tests
+	@echo "$(GREEN)🧪 Running authentication tests...$(NC)"
+	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests/test_auth_comprehensive.py -v --cov-fail-under=0
+
 test-all: ## Run all tests in one command
 	@echo "$(GREEN)🧪 Running all tests...$(NC)"
 	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests -v
 	@echo "$(GREEN)✅ All tests completed!$(NC)"
+
+test-with-db-setup: db-test-setup test-all ## Run tests with fresh test database
+	@echo "$(GREEN)✅ Tests completed with fresh database!$(NC)"
 
 test: test-all ## Alias for test-all
 
@@ -190,6 +197,11 @@ db-upgrade: ## Apply database migrations
 db-downgrade: ## Rollback last migration
 	@echo "$(YELLOW)🗄️ Rolling back migration...$(NC)"
 	cd $(BACKEND_DIR) && alembic downgrade -1
+
+db-test-setup: ## Setup test database with migrations (Docker)
+	@echo "$(GREEN)🗄️ Setting up test database...$(NC)"
+	docker exec backend sh -c "ENVIRONMENT=test alembic upgrade head"
+	@echo "$(GREEN)✅ Test database ready!$(NC)"
 
 db-reset: docker-down docker-up db-create ## Reset database (Docker + recreate)
 	@echo "$(GREEN)🗄️ Database reset complete!$(NC)"
