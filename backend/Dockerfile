@@ -4,7 +4,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    UV_CACHE_DIR=/tmp/uv-cache
+    UV_CACHE_DIR=/tmp/uv-cache \
+    PATH="/app/.venv/bin:/usr/local/bin/:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
 
 # Set work directory
 WORKDIR /app
@@ -13,16 +14,13 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && pip install uv \
     && rm -rf /var/lib/apt/lists/*
-
-# Add uv to PATH
-ENV PATH="/root/.cargo/bin:$PATH"
 
 # Copy dependency files
 COPY pyproject.toml ./
 
-# Install dependencies using uv
+# Install dependencies using pip directly in venv  
 RUN uv venv /app/.venv && \
     . /app/.venv/bin/activate && \
     uv pip install -e .
@@ -34,4 +32,4 @@ COPY . .
 EXPOSE 8000
 
 # Run the application
-CMD ["/app/.venv/bin/python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+ENTRYPOINT ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
