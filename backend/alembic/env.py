@@ -21,7 +21,20 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 def get_url():
-    """Get database URL from environment or config."""
+    """Resolve the database URL for migrations.
+
+    Precedence:
+    1) If ENVIRONMENT == 'test', use Settings (reads .env.test) to avoid
+       accidentally migrating the primary DB inside containers.
+    2) DATABASE_URL env var if set.
+    3) alembic.ini sqlalchemy.url fallback.
+    """
+    env = os.getenv("ENVIRONMENT")
+    if env == "test":
+        # Load from application settings which respect .env.test
+        from app.core.config import settings
+        return str(settings.DATABASE_URL)
+
     return os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
 
 def run_migrations_offline() -> None:

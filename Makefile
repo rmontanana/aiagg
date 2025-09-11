@@ -182,10 +182,6 @@ docker-clean: docker-down ## Clean up Docker containers and images
 # Database Operations
 # ============================================================================
 
-db-create: ## Create test database
-	@echo "$(GREEN)🗄️ Creating test database...$(NC)"
-	cd $(BACKEND_DIR) && $(PYTHON) scripts/create_test_db.py
-
 db-migrate: ## Generate new migration
 	@echo "$(GREEN)🗄️ Generating migration...$(NC)"
 	cd $(BACKEND_DIR) && alembic revision --autogenerate -m "$(MSG)"
@@ -199,8 +195,11 @@ db-downgrade: ## Rollback last migration
 	cd $(BACKEND_DIR) && alembic downgrade -1
 
 db-test-setup: ## Setup test database with migrations (Docker)
+	@echo "$(GREEN)🗄️ Creating test database...$(NC)"
+	cd $(BACKEND_DIR) && $(PYTHON) scripts/create_test_db.py
 	@echo "$(GREEN)🗄️ Setting up test database...$(NC)"
-	docker exec backend sh -c "ENVIRONMENT=test alembic upgrade head"
+	docker exec backend sh -c "ENVIRONMENT=test DATABASE_URL=postgresql://postgres:postgres@db:5432/aiagg_test alembic downgrade base || true"
+	docker exec backend sh -c "ENVIRONMENT=test DATABASE_URL=postgresql://postgres:postgres@db:5432/aiagg_test alembic upgrade head"
 	@echo "$(GREEN)✅ Test database ready!$(NC)"
 
 db-reset: docker-down docker-up db-create ## Reset database (Docker + recreate)

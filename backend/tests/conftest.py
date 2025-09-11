@@ -13,50 +13,62 @@ from app.main import app
 # Test database URL
 TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/aiagg_test"
 
-# Create test engine
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 
-# Test session factory
-TestSessionLocal = async_sessionmaker(
-    bind=test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+# Event loop scope is configured in pyproject.toml to 'session'
 
 
 @pytest_asyncio.fixture(scope="session")
-async def setup_database():
-    """Setup database tables once per test session."""
-    async with test_engine.begin() as conn:
+async def engine():
+    """Async engine bound to the test DB for the session."""
+    eng = create_async_engine(TEST_DATABASE_URL, echo=False)
+    # Create schema once
+    async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    yield
-    # Cleanup after all tests
-    async with test_engine.begin() as conn:
+    yield eng
+    # Drop schema after session
+    async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+    await eng.dispose()
 
 
 @pytest_asyncio.fixture
-async def db_session(setup_database) -> AsyncGenerator[AsyncSession, None]:
-    """Create a test database session with transaction rollback."""
-    connection = await test_engine.connect()
-    transaction = await connection.begin()
-    
-    # Create session bound to the transaction
-    session = AsyncSession(bind=connection, expire_on_commit=False)
-    
+async def db_connection(engine) -> AsyncGenerator[object, None]:
+    """Per-test DB connection with outer transaction for isolation."""
+    conn = await engine.connect()
+    trans = await conn.begin()
+    # Clean state for this test inside the transaction
+    table_names = [t.name for t in Base.metadata.sorted_tables]
+    if table_names:
+        tables_csv = ", ".join(f'"{name}"' for name in table_names)
+        await conn.execute(text(f"TRUNCATE {tables_csv} RESTART IDENTITY CASCADE"))
     try:
-        yield session
+        yield conn
     finally:
-        await session.close()
-        await transaction.rollback()
-        await connection.close()
+        await trans.rollback()
+        await conn.close()
 
 
 @pytest_asyncio.fixture
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Create a test HTTP client."""
+async def db_session(db_connection) -> AsyncGenerator[AsyncSession, None]:
+    """AsyncSession for assertions, bound to the per-test connection."""
+    SessionLocal = async_sessionmaker(bind=db_connection, class_=AsyncSession, expire_on_commit=False)
+    async with SessionLocal() as session:
+        yield session
+
+
+@pytest_asyncio.fixture
+async def client(db_connection) -> AsyncGenerator[AsyncClient, None]:
+    """HTTP client; app DB sessions share the same connection using nested transactions."""
+    SessionLocal = async_sessionmaker(bind=db_connection, class_=AsyncSession, expire_on_commit=False)
+
     async def override_get_db():
-        yield db_session
+        async with SessionLocal() as session:
+            try:
+                yield session
+                # Don't commit here - let the outer transaction handle it
+            except Exception:
+                await session.rollback()
+                raise
 
     app.dependency_overrides[get_db] = override_get_db
 
@@ -65,12 +77,3 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield test_client
 
     app.dependency_overrides.clear()
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an instance of the default event loop for the test session."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
