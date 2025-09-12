@@ -209,7 +209,8 @@ db-test-setup: ## Setup test database with migrations (Docker)
 	docker exec backend sh -c "ENVIRONMENT=test DATABASE_URL=postgresql://postgres:postgres@db:5432/aiagg_test alembic upgrade head"
 	@printf "$(GREEN)✅ Test database ready!$(NC)\n"
 
-db-reset: docker-down docker-up db-create ## Reset database (Docker + recreate)
+db-reset:  ## Reset database (Docker + recreate)
+	docker-down docker-up db-create
 	@printf "$(GREEN)🗄️ Database reset complete!$(NC)\n"
 
 # ============================================================================
