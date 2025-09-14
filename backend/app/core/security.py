@@ -10,9 +10,7 @@ from .config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def create_access_token(
-    subject: str | Any, expires_delta: timedelta = None
-) -> str:
+def create_access_token(subject: str | Any, expires_delta: timedelta = None) -> str:
     """Create a JWT access token."""
     if expires_delta:
         expire = datetime.now(UTC) + expires_delta

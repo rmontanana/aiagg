@@ -1,14 +1,16 @@
-from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
-from alembic import context
 import os
 import sys
+from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 
 # Add the app directory to the Python path
-sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
+from app.db import models  # Import all models # noqa: F401
 from app.db.base import Base
-from app.db.models import *  # Import all models
 
 # this is the Alembic Config object
 config = context.config
@@ -19,6 +21,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 target_metadata = Base.metadata
+
 
 def get_url():
     """Resolve the database URL for migrations.
@@ -33,9 +36,11 @@ def get_url():
     if env == "test":
         # Load from application settings which respect .env.test
         from app.core.config import settings
+
         return str(settings.DATABASE_URL)
 
     return os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
@@ -55,7 +60,7 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
-    
+
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
@@ -63,9 +68,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

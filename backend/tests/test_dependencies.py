@@ -29,7 +29,7 @@ async def test_get_current_user_valid_token():
         email="test@example.com",
         hashed_password="hashed",
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
     )
 
     # Mock database result
@@ -54,7 +54,9 @@ async def test_get_current_user_invalid_token():
     mock_db = AsyncMock(spec=AsyncSession)
 
     # Invalid token
-    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid_token")
+    credentials = HTTPAuthorizationCredentials(
+        scheme="Bearer", credentials="invalid_token"
+    )
 
     # Should raise HTTPException
     with pytest.raises(HTTPException) as exc_info:
@@ -95,7 +97,7 @@ async def test_get_current_active_user_active():
         email="test@example.com",
         hashed_password="hashed",
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
     )
 
     result = await get_current_active_user(mock_user)
@@ -111,7 +113,7 @@ async def test_get_current_active_user_inactive():
         email="test@example.com",
         hashed_password="hashed",
         is_active=False,  # Inactive user
-        is_superuser=False
+        is_superuser=False,
     )
 
     with pytest.raises(HTTPException) as exc_info:
@@ -130,7 +132,7 @@ async def test_get_current_superuser_valid():
         email="admin@example.com",
         hashed_password="hashed",
         is_active=True,
-        is_superuser=True  # Superuser
+        is_superuser=True,  # Superuser
     )
 
     result = await get_current_superuser(mock_user)
@@ -146,7 +148,7 @@ async def test_get_current_superuser_not_super():
         email="test@example.com",
         hashed_password="hashed",
         is_active=True,
-        is_superuser=False  # Not a superuser
+        is_superuser=False,  # Not a superuser
     )
 
     with pytest.raises(HTTPException) as exc_info:

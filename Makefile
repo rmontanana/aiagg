@@ -1,11 +1,11 @@
 # AI News Aggregator - Development Makefile
 # ==========================================
 
-.PHONY: help install install-dev clean test test-unit test-models test-api test-all test-by-category test-coverage
-.PHONY: lint format typecheck pre-commit run run-dev run-prod
+.PHONY: help install install-dev clean test-unit test-models test-api test-all test-coverage test-auth
+.PHONY: lint format typecheck pre-commit run-dev run-prod
 .PHONY: docker-up docker-down docker-build docker-logs docker-clean
 .PHONY: db-create db-migrate db-upgrade db-downgrade db-reset
-.PHONY: coverage coverage-report coverage-html
+.PHONY: coverage coverage-html
 .PHONY: build deploy release docs info status
 .DEFAULT_GOAL := help
 
@@ -29,13 +29,13 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+.*:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(install|clean)' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@printf "\n"
 	@printf "$(BLUE)🧪 Testing:$(NC)\n"
-	@grep -E '^[a-zA-Z_-]+.*:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(test|coverage)' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+.*:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(test-|coverage)' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@printf "\n"
 	@printf "$(BLUE)🔧 Code Quality:$(NC)\n"
 	@grep -E '^[a-zA-Z_-]+.*:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(lint|format|typecheck|pre-commit)' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@printf "\n"
 	@printf "$(BLUE)🚀 Running:$(NC)\n"
-	@grep -E '^[a-zA-Z_-]+.*:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(run)' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+.*:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(run-)' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 	@printf "\n"
 	@printf "$(BLUE)🐳 Docker:$(NC)\n"
 	@grep -E '^[a-zA-Z_-]+.*:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^(docker)' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
@@ -105,13 +105,8 @@ test-all: ## Run all tests in one command
 	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests -v
 	@printf "$(GREEN)✅ All tests completed!$(NC)\n"
 
-test-with-db-setup: db-test-setup test-all ## Run tests with fresh test database
-	@printf "$(GREEN)✅ Tests completed with fresh database!$(NC)\n"
 
-test: test-all ## Alias for test-all
 
-test-by-category: test-unit test-models test-api test-coverage ## Run tests by category (legacy)
-	@printf "$(GREEN)✅ All categorized tests completed!$(NC)\n"
 
 coverage: ## Run tests with coverage report
 	@printf "$(GREEN)📊 Running tests with coverage...$(NC)\n"
@@ -122,7 +117,6 @@ coverage-html: ## Generate HTML coverage report
 	cd $(BACKEND_DIR) && $(TEST_ENV) $(UV) run pytest tests --cov=app --cov-report=html
 	@printf "$(GREEN)📋 Coverage report: $(BACKEND_DIR)/htmlcov/index.html$(NC)"
 
-coverage-report: coverage-html ## Alias for coverage-html
 
 # ============================================================================
 # Code Quality
@@ -147,7 +141,6 @@ pre-commit: format lint typecheck ## Run all code quality checks
 # Running the Application
 # ============================================================================
 
-run: run-dev ## Alias for run-dev
 
 run-dev: ## Run development server with auto-reload
 	@printf "$(GREEN)🚀 Starting development server...$(NC)\n"
@@ -209,8 +202,7 @@ db-test-setup: ## Setup test database with migrations (Docker)
 	docker exec backend sh -c "ENVIRONMENT=test DATABASE_URL=postgresql://postgres:postgres@db:5432/aiagg_test alembic upgrade head"
 	@printf "$(GREEN)✅ Test database ready!$(NC)\n"
 
-db-reset:  ## Reset database (Docker + recreate)
-	docker-down docker-up db-create
+db-reset: docker-down docker-up ## Reset database (Docker + recreate)
 	@printf "$(GREEN)🗄️ Database reset complete!$(NC)\n"
 
 # ============================================================================
@@ -220,7 +212,7 @@ db-reset:  ## Reset database (Docker + recreate)
 build: clean install-dev pre-commit test-all ## Full build process
 	@printf "$(GREEN)✅ Build completed successfully!$(NC)\n"
 
-check: pre-commit test-all ## Run all checks (quality + tests)
+check: lint test-all ## Run all checks (linting + tests)
 	@printf "$(GREEN)✅ All checks passed!$(NC)\n"
 
 # ============================================================================
@@ -236,7 +228,7 @@ dev: install-dev docker-up ## Quick development setup
 quick-test: test-unit test-models ## Quick test (skip API tests)
 	@printf "$(GREEN)⚡ Quick tests completed!$(NC)\n"
 
-full-check: clean install-dev pre-commit test-all coverage-html ## Complete quality check
+full-check: clean install-dev lint test-all coverage-html ## Complete quality check
 	@printf "$(GREEN)🎉 Full check completed!$(NC)\n"
 
 # ============================================================================

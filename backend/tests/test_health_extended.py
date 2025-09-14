@@ -22,7 +22,7 @@ def test_health_db_endpoint_success():
 
 def test_health_db_endpoint_failure():
     """Test database health check with connection failure."""
-    with patch('app.db.base.get_db') as mock_get_db:
+    with patch("app.db.base.get_db") as mock_get_db:
         # Mock database session that raises exception
         async def failing_db():
             raise Exception("Database connection failed")

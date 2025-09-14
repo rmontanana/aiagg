@@ -1,11 +1,9 @@
-import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.db.base import Base, get_db
 from app.main import app
@@ -51,7 +49,9 @@ async def db_connection(engine) -> AsyncGenerator[object, None]:
 @pytest_asyncio.fixture
 async def db_session(db_connection) -> AsyncGenerator[AsyncSession, None]:
     """AsyncSession for assertions, bound to the per-test connection."""
-    SessionLocal = async_sessionmaker(bind=db_connection, class_=AsyncSession, expire_on_commit=False)
+    SessionLocal = async_sessionmaker(
+        bind=db_connection, class_=AsyncSession, expire_on_commit=False
+    )
     async with SessionLocal() as session:
         yield session
 
@@ -59,7 +59,9 @@ async def db_session(db_connection) -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture
 async def client(db_connection) -> AsyncGenerator[AsyncClient, None]:
     """HTTP client; app DB sessions share the same connection using nested transactions."""
-    SessionLocal = async_sessionmaker(bind=db_connection, class_=AsyncSession, expire_on_commit=False)
+    SessionLocal = async_sessionmaker(
+        bind=db_connection, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def override_get_db():
         async with SessionLocal() as session:

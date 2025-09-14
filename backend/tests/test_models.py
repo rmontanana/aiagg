@@ -12,7 +12,7 @@ def test_user_model_creation():
         username="testuser",
         hashed_password="hashed_password_here",
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
     )
 
     assert user.email == "test@example.com"
@@ -28,7 +28,7 @@ def test_news_source_model():
         url="https://testnews.com",
         rss_url="https://testnews.com/rss",
         is_active=True,
-        category="technology"
+        category="technology",
     )
 
     assert source.name == "Test News"
@@ -48,7 +48,7 @@ def test_article_model():
         published_at=datetime.now(),
         is_processed=False,
         sentiment_score=0.5,
-        source_id=1
+        source_id=1,
     )
 
     assert article.title == "Test Article"
@@ -66,11 +66,7 @@ def test_tag_model():
 
 def test_article_tag_model():
     """Test ArticleTag model can be created."""
-    article_tag = ArticleTag(
-        article_id=1,
-        tag_id=1,
-        confidence=0.95
-    )
+    article_tag = ArticleTag(article_id=1, tag_id=1, confidence=0.95)
 
     assert article_tag.article_id == 1
     assert article_tag.tag_id == 1
@@ -80,10 +76,7 @@ def test_article_tag_model():
 def test_user_preference_model():
     """Test UserPreference model can be created."""
     preference = UserPreference(
-        user_id=1,
-        preference_type="category",
-        preference_value="technology",
-        weight=1.0
+        user_id=1, preference_type="category", preference_value="technology", weight=1.0
     )
 
     assert preference.user_id == 1

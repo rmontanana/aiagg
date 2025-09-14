@@ -41,7 +41,7 @@ async def get_articles(
     per_page: int = Query(20, ge=1, le=100),
     category: str | None = None,
     search: str | None = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Get paginated list of articles."""
 
@@ -61,7 +61,9 @@ async def get_articles(
     # Get total count
     count_query = select(func.count(Article.id))
     if category:
-        count_query = count_query.select_from(Article.join(NewsSource)).where(NewsSource.category == category)
+        count_query = count_query.select_from(Article.join(NewsSource)).where(
+            NewsSource.category == category
+        )
     if search:
         count_query = count_query.where(Article.title.contains(search))
 
@@ -87,17 +89,19 @@ async def get_articles(
         )
         tags = list(tags_result.scalars().all())
 
-        article_responses.append(ArticleResponse(
-            id=article.id,
-            title=article.title,
-            url=article.url,
-            summary=article.summary,
-            author=article.author,
-            published_at=article.published_at,
-            sentiment_score=article.sentiment_score,
-            source_name=article.source.name,
-            tags=tags
-        ))
+        article_responses.append(
+            ArticleResponse(
+                id=article.id,
+                title=article.title,
+                url=article.url,
+                summary=article.summary,
+                author=article.author,
+                published_at=article.published_at,
+                sentiment_score=article.sentiment_score,
+                source_name=article.source.name,
+                tags=tags,
+            )
+        )
 
     total_pages = (total + per_page - 1) // per_page
 
@@ -106,15 +110,12 @@ async def get_articles(
         total=total,
         page=page,
         per_page=per_page,
-        total_pages=total_pages
+        total_pages=total_pages,
     )
 
 
 @router.get("/{article_id}", response_model=ArticleResponse)
-async def get_article(
-    article_id: int,
-    db: AsyncSession = Depends(get_db)
-):
+async def get_article(article_id: int, db: AsyncSession = Depends(get_db)):
     """Get a specific article by ID."""
 
     result = await db.execute(
@@ -142,5 +143,5 @@ async def get_article(
         published_at=article.published_at,
         sentiment_score=article.sentiment_score,
         source_name=article.source.name,
-        tags=tags
+        tags=tags,
     )

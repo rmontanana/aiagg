@@ -63,12 +63,14 @@ def test_articles_endpoint_structure():
     # We'll skip testing the actual endpoint since it requires database
     # Instead, let's test that our app structure is correct
     from app.api.routes import articles
-    assert hasattr(articles, 'router')
+
+    assert hasattr(articles, "router")
 
 
 def test_app_includes_articles_router():
     """Test that the main app includes the articles router."""
     from app.main import app
+
     # Check that the app has routes
     routes = [route.path for route in app.routes]
     # Should have basic routes but we won't test database-dependent ones

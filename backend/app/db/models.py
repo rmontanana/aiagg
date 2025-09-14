@@ -16,6 +16,7 @@ from .base import Base
 
 class User(Base):
     """User model for authentication and preferences."""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -25,7 +26,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     preferences = relationship("UserPreference", back_populates="user")
@@ -33,6 +36,7 @@ class User(Base):
 
 class NewsSource(Base):
     """News source configuration."""
+
     __tablename__ = "news_sources"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -49,6 +53,7 @@ class NewsSource(Base):
 
 class Article(Base):
     """News article model."""
+
     __tablename__ = "articles"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -72,6 +77,7 @@ class Article(Base):
 
 class Tag(Base):
     """Content tags for categorization."""
+
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -84,6 +90,7 @@ class Tag(Base):
 
 class ArticleTag(Base):
     """Many-to-many relationship between articles and tags."""
+
     __tablename__ = "article_tags"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -98,6 +105,7 @@ class ArticleTag(Base):
 
 class UserPreference(Base):
     """User preferences for content personalization."""
+
     __tablename__ = "user_preferences"
 
     id = Column(Integer, primary_key=True, index=True)

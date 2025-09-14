@@ -36,10 +36,7 @@ class Token(BaseModel):
 
 
 @router.post("/register", response_model=UserResponse)
-async def register(
-    user_data: UserCreate,
-    db: AsyncSession = Depends(get_db)
-):
+async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user."""
     # Check if user exists
     result = await db.execute(
@@ -52,7 +49,7 @@ async def register(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email or username already registered"
+            detail="Email or username already registered",
         )
 
     # Create new user
@@ -60,7 +57,7 @@ async def register(
     db_user = User(
         email=user_data.email,
         username=user_data.username,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
     )
 
     db.add(db_user)
@@ -72,14 +69,11 @@ async def register(
 
 @router.post("/login", response_model=Token)
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
 ):
     """Login and get access token."""
     # Get user
-    result = await db.execute(
-        select(User).where(User.username == form_data.username)
-    )
+    result = await db.execute(select(User).where(User.username == form_data.username))
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
@@ -91,8 +85,7 @@ async def login(
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
 
     # Create access token

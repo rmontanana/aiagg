@@ -5,10 +5,10 @@ Run this before running integration tests.
 """
 
 import asyncio
+import sys
+
 import asyncpg
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import ProgrammingError
-import sys
 
 
 async def create_test_database():
@@ -17,26 +17,26 @@ async def create_test_database():
         # Connect to postgres database to create the test database
         conn = await asyncpg.connect(
             user="postgres",
-            password="postgres", 
+            password="postgres",
             host="localhost",
             port=5432,
-            database="postgres"
+            database="postgres",
         )
-        
+
         # Check if test database exists
         result = await conn.fetchval(
             "SELECT 1 FROM pg_database WHERE datname = 'aiagg_test'"
         )
-        
+
         if not result:
             print("Creating test database 'aiagg_test'...")
             await conn.execute("CREATE DATABASE aiagg_test")
             print("✅ Test database created successfully!")
         else:
             print("✅ Test database 'aiagg_test' already exists")
-            
+
         await conn.close()
-        
+
     except Exception as e:
         print(f"❌ Error creating test database: {e}")
         print("\n💡 Make sure PostgreSQL is running:")
@@ -49,23 +49,23 @@ def create_test_database_sync():
     try:
         # Connect to postgres database
         engine = create_engine("postgresql://postgres:postgres@localhost:5432/postgres")
-        
+
         with engine.connect() as conn:
             # Set autocommit for database creation
             conn.execution_options(autocommit=True)
-            
+
             # Check if database exists
             result = conn.execute(
                 text("SELECT 1 FROM pg_database WHERE datname = 'aiagg_test'")
             ).fetchone()
-            
+
             if not result:
                 print("Creating test database 'aiagg_test'...")
                 conn.execute(text("CREATE DATABASE aiagg_test"))
                 print("✅ Test database created successfully!")
             else:
                 print("✅ Test database 'aiagg_test' already exists")
-                
+
     except Exception as e:
         print(f"❌ Error creating test database: {e}")
         print("\n💡 Make sure PostgreSQL is running:")
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     except ImportError:
         # Fall back to sync version
         create_test_database_sync()
-    
+
     print("\n🧪 Ready to run integration tests!")
     print("   export ENVIRONMENT=test")
     print("   uv run pytest tests/test_integration.py -v")

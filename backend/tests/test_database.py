@@ -12,7 +12,7 @@ from app.db.base import get_db
 async def test_get_db_session():
     """Test database session creation."""
     # This will test the get_db function without requiring actual database
-    with patch('app.db.base.AsyncSessionLocal') as mock_session_factory:
+    with patch("app.db.base.AsyncSessionLocal") as mock_session_factory:
         mock_session = AsyncMock(spec=AsyncSession)
         mock_session_factory.return_value.__aenter__.return_value = mock_session
         mock_session_factory.return_value.__aexit__.return_value = None
